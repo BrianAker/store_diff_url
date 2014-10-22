@@ -1,0 +1,34 @@
+--- # Update keys
+- name: url diff
+  hosts: all
+
+  tasks:
+  - stat: path=files/discovery
+    register: discovery_stat
+    connection: local
+
+  - get_url:
+      url: http://discovery.etcd.io/new
+      dest: files/discovery
+      mode: 0440
+    connection: local
+    register: result
+    when: discovery_stat.stat.exists == False
+
+  - name: Test for change
+    debug:
+      msg: "Change occured"
+    when: result.changed
+
+  - name: Read into variable
+    command: cat files/discovery
+    connection: local
+    register: file_echo_contents
+
+  - name: set fact
+    set_fact:
+      file_contents: "{{ file_echo_contents.stdout }}"
+
+  - name: Test for change
+    debug:
+      msg: "{{ file_contents }}"
